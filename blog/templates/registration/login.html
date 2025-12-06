@@ -1,0 +1,22 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <h1 class="page-title">Iniciar sesión</h1>
+
+    <form method="post" class="card card-post p-3">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary w-100 mt-2">
+        Entrar
+      </button>
+    </form>
+
+    <p class="mt-3 text-center">
+      ¿No tenés cuenta?
+      <a href="{% url 'blog:signup' %}">Registrate</a>.
+    </p>
+  </div>
+</div>
+{% endblock %}

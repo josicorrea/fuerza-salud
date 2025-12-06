@@ -1,0 +1,21 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Eliminar comentario</h3>
+          <p>¿Estás seguro que querés eliminar este comentario?</p>
+          <form method="post">
+            {% csrf_token %}
+            <a class="btn btn-secondary" href="{{ object.post.get_absolute_url }}">Cancelar</a>
+            <button class="btn btn-danger" type="submit">Eliminar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

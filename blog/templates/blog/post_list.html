@@ -1,0 +1,113 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-3">
+      <aside>
+        <div class="mb-3">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="categoriesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              Categorías
+            </button>
+            <ul class="dropdown-menu w-100" aria-labelledby="categoriesDropdown" style="max-height:320px;overflow-y:auto;">
+              <li class="{% if not current_category %}active{% endif %}"><a class="dropdown-item {% if not current_category %}active{% endif %}" href="{% url 'blog:home' %}">Todas</a></li>
+              {% for cat in categories %}
+                <li class="{% if current_category == cat.slug %}active{% endif %}">
+                  <a class="dropdown-item {% if current_category == cat.slug %}active{% endif %}" href="{% url 'blog:category_posts' cat.slug %}">{{ cat.name }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <h6>Orden</h6>
+        <form method="get" class="mb-3">
+          <input type="hidden" name="category" value="{{ current_category }}">
+          <select name="order" class="form-select mb-2" onchange="this.form.submit()">
+            <option value="date_desc" {% if current_order == 'date_desc' %}selected{% endif %}>Fecha (recientes)</option>
+            <option value="date_asc" {% if current_order == 'date_asc' %}selected{% endif %}>Fecha (antiguos)</option>
+            <option value="title_asc" {% if current_order == 'title_asc' %}selected{% endif %}>Título (A-Z)</option>
+            <option value="title_desc" {% if current_order == 'title_desc' %}selected{% endif %}>Título (Z-A)</option>
+          </select>
+        </form>
+      </aside>
+    </div>
+    <div class="col-lg-6">
+      <h1 class="page-title">Últimos artículos</h1>
+
+      {% if user.is_authenticated %}
+        {% if user.is_superuser %}
+          <div class="mb-3">
+            <a href="{% url 'blog:post_create' %}" class="btn btn-success">+ Crear artículo</a>
+          </div>
+        {% else %}
+          {% if user.profile and user.profile.is_collaborator %}
+            <div class="mb-3">
+              <a href="{% url 'blog:post_create' %}" class="btn btn-success">+ Crear artículo</a>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endif %}
+
+      {% if posts %}
+        {% for post in posts %}
+          <div class="card card-post mb-3">
+            <div class="card-body">
+              <a href="{% url 'blog:post_detail' post.slug %}"
+                 class="text-decoration-none text-dark">
+                <h3 class="card-title mb-2">{{ post.title }}</h3>
+              </a>
+              <p class="card-subtitle text-muted mb-2">
+                Publicado el {{ post.created_at|date:"d/m/Y H:i" }}
+                por <strong>{{ post.author.username }}</strong>
+              </p>
+              {% if post.category %}
+                <span class="badge bg-primary mb-2">
+                  {{ post.category.name }}
+                </span>
+              {% endif %}
+              <p class="card-text text-secondary mb-0">
+                {{ post.content|truncatechars:140 }}
+              </p>
+            </div>
+          </div>
+        {% endfor %}
+
+        {% if is_paginated %}
+          <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination">
+              {% if posts.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="{% if request.GET %}?{{ request.GET.urlencode }}&page={{ posts.previous_page_number }}{% else %}?page={{ posts.previous_page_number }}{% endif %}">Anterior</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+              {% endif %}
+
+              {% for num in posts.paginator.page_range %}
+                {% if num == posts.number %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="{% if request.GET %}?{{ request.GET.urlencode }}&page={{ num }}{% else %}?page={{ num }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if posts.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="{% if request.GET %}?{{ request.GET.urlencode }}&page={{ posts.next_page_number }}{% else %}?page={{ posts.next_page_number }}{% endif %}">Siguiente</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="alert alert-info">
+          Todavía no hay artículos publicados. Pronto vas a ver contenido sobre entrenamiento,
+          alimentación y descanso.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
