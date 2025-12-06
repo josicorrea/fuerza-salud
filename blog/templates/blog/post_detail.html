@@ -19,10 +19,29 @@
             por <strong>{{ post.author.username }}</strong>
           </p>
 
+          {% if post.image %}
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="img-fluid rounded mb-3" style="max-width: 100%; height: auto;">
+          {% endif %}
+
           <hr>
 
           <div class="card-text fs-5">
             {{ post.content|linebreaks }}
+          </div>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+          <div>
+            {% if user.is_authenticated %}
+              {% if user.is_superuser %}
+                <a href="{% url 'blog:post_update' post.slug %}" class="btn btn-sm btn-warning">Editar</a>
+                <a href="{% url 'blog:post_delete' post.slug %}" class="btn btn-sm btn-danger">Borrar</a>
+              {% elif post.author == user %}
+                {% if user.profile and user.profile.is_collaborator %}
+                  <a href="{% url 'blog:post_update' post.slug %}" class="btn btn-sm btn-warning">Editar</a>
+                  <a href="{% url 'blog:post_delete' post.slug %}" class="btn btn-sm btn-danger">Borrar</a>
+                {% endif %}
+              {% endif %}
+            {% endif %}
           </div>
         </div>
       </div>

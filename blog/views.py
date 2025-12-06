@@ -115,10 +115,20 @@ class CommentUpdateView(LoginRequiredMixin, CommentEditMixin, UpdateView):
     form_class = CommentForm
     template_name = 'blog/comment_form.html'
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Comentario actualizado exitosamente.')
+        return response
+
 
 class CommentDeleteView(LoginRequiredMixin, CommentEditMixin, DeleteView):
     model = Comment
     template_name = 'blog/comment_confirm_delete.html'
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, 'Comentario eliminado exitosamente.')
+        return response
 
     def get_success_url(self):
         return self.object.post.get_absolute_url()
@@ -173,13 +183,20 @@ class PostCreateView(LoginRequiredMixin, IsCollaboratorMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, f'Artículo "{self.object.title}" creado exitosamente.')
+        return response
 
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/post_form.html'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Artículo "{self.object.title}" actualizado exitosamente.')
+        return response
 
     def test_func(self):
         user = self.request.user
@@ -195,6 +212,12 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = 'blog/post_confirm_delete.html'
     success_url = reverse_lazy('blog:home')
+
+    def delete(self, request, *args, **kwargs):
+        post_title = self.get_object().title
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Artículo "{post_title}" eliminado exitosamente.')
+        return response
 
     def test_func(self):
         user = self.request.user

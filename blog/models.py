@@ -33,6 +33,7 @@ class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='posts')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
+    image = models.ImageField(upload_to='posts/', blank=True, null=True, help_text="Imagen principal del artículo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_published = models.BooleanField(default=True)
@@ -47,7 +48,14 @@ class Post(models.Model):
     def save(self, *args, **kwargs):
         """Genera automáticamente el slug a partir del título."""
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            # Si el slug ya existe y es otro post (no el mismo), agregar un número
+            while Post.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -69,6 +77,9 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comentario de {self.author.username} en {self.post.title}"
 
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'slug': self.post.slug})
+
 
 class Profile(models.Model):
     """Modelo de Perfil de Usuario con roles."""
@@ -79,7 +90,7 @@ class Profile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='miembro')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='visitante')
 
     class Meta:
         verbose_name_plural = "Perfiles"
