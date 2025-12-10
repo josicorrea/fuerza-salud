@@ -11,6 +11,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+# Cargar variables de entorno con manejo de errores
+try:
+    from decouple import config, Csv
+    HAS_DECOUPLE = True
+except ImportError:
+    HAS_DECOUPLE = False
+    def config(key, default=None, cast=None):
+        """Fallback para cuando decouple no está disponible"""
+        value = os.environ.get(key, default)
+        if cast is not None and value:
+            if cast == bool:
+                return value.lower() in ('true', '1', 'yes')
+            elif cast == int:
+                return int(value)
+            elif hasattr(cast, '__call__'):  # Para Csv()
+                return value.split(',') if value else []
+        return value
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +39,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9@7w_(0t92kzo89!+rrrl1dc)iri%v0mmfs-v9!-bu^8u!x0h2'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-9@7w_(0t92kzo89!+rrrl1dc)iri%v0mmfs-v9!-bu^8u!x0h2')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',') if isinstance(config('ALLOWED_HOSTS', default='localhost,127.0.0.1'), str) else config('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 # Application definition
@@ -49,6 +68,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Agregar WhiteNoise solo en producción
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'salud_fuerza.urls'
 
@@ -115,11 +138,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static') if not DEBUG else BASE_DIR / 'static'
 
 # Media files (user uploads like images)
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') if not DEBUG else BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -128,3 +152,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Redirect to home after login (instead of /accounts/profile/)
 LOGIN_REDIRECT_URL = 'blog:home'
+
+# Security Settings for Production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_SECURITY_POLICY = {
+        "default-src": ("'self'",),
+    }
+
