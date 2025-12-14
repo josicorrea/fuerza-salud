@@ -52,8 +52,6 @@ db.sqlite3
 *.sqlite3
 
 # Media files (user uploads)
-media/posts/
-media/*
 !media/.gitkeep
 
 # Static files
